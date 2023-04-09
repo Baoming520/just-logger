@@ -1,0 +1,4 @@
+build/
+dist/
+just_logger.egg-info/
+venv/
