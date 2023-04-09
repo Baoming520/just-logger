@@ -1,4 +1,6 @@
 build/
 dist/
+just_logger/__pycache__/
 just_logger.egg-info/
+logs/
 venv/
