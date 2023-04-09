@@ -8,4 +8,5 @@ if __name__ == '__main__':
     logger.add_stream_handler(LogLevel.INFO)
     logger.add_file_handler('demo.log', LogLevel.INFO)
     logger.log('hello world!', LogLevel.INFO)
+    logger.log('bad man!', LogLevel.ERROR)
     pass
