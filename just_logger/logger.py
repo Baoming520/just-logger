@@ -24,13 +24,17 @@ class LogLevel(Enum):
     CRITICAL = logging.CRITICAL
 
 
+class LogSplitType(Enum):
+    Time = 1
+    Size = 2
+
+
 class Logger:
-    def __init__(self, logger_name: str, log_dir: str=None, level: LogLevel=LogLevel.INFO, storage_days: int=7) -> None:
+    def __init__(self, logger_name: str, log_dir: str=None, level: LogLevel=LogLevel.INFO, split_type: LogSplitType=LogSplitType.Time) -> None:
         self.__sptr = '/'
         if platform.system() == 'windows':
             self.__sptr = '\\'
         
-        self.__storage_days = storage_days
         if log_dir is None:
             self.__logdir = os.path.join(os.getcwd(), 'logs') 
         else:
@@ -41,6 +45,8 @@ class Logger:
         fmt = '[%(asctime)s - %(levelname)s] %(message)s'
         datefmt = '%Y/%m/%d %H:%M:%S %p'
         self.__formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
+        self.__split_type = split_type
+        self.__func = logging.handlers.TimedRotatingFileHandler if split_type == LogSplitType.Time else logging.handlers.RotatingFileHandler
     
 
     def __del__(self) -> None:
@@ -57,20 +63,37 @@ class Logger:
         self.__logger.addHandler(handler)
 
     
-    def add_file_handler(self, logfile: str, level: LogLevel=LogLevel.WARNING) -> None:
-        if self.__contains_handler(logging.handlers.TimedRotatingFileHandler):
+    def add_file_handler(self, logfile: str, level: LogLevel=LogLevel.WARNING, options: dict=None) -> None:
+        if self.__contains_handler(self.__func):
             return
+        
+        if options is None:
+            options = {}
+        if 'storage_days' not in options:
+            options['storage_days'] = 30
+        if 'backup_count' not in options:
+            options['backup_count'] = 30
+        if 'max_bytes' not in options:
+            options['max_bytes'] = 1024 * 1024
 
         if not os.path.exists(self.__logdir):
             os.makedirs(self.__logdir)
         logfile = f'{self.__logdir}{self.__sptr}{logfile}'
-        handler = logging.handlers.TimedRotatingFileHandler(
-            logfile, 
-            when='MIDNIGHT', 
-            interval=1, 
-            backupCount=self.__storage_days, 
-            atTime=datetime.time(0, 0, 0, 0), 
-            encoding='utf-8')
+
+        if self.__split_type == LogSplitType.Time:
+            handler = self.__func(
+                logfile, 
+                when='MIDNIGHT', 
+                interval=1, 
+                atTime=datetime.time(0, 0, 0, 0), 
+                encoding='utf-8')
+        else:
+            handler = self.__func(
+                logfile,
+                maxBytes=options['max_bytes'],
+                backupCount=options['backup_count'], # 存储日志的最大数量
+                encoding='utf-8')
+        
         handler.setLevel(level.value)
         handler.setFormatter(self.__formatter)
         self.__logger.addHandler(handler)

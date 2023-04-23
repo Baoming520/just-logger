@@ -4,3 +4,4 @@ just_logger.egg-info/
 logs/
 venv/
 */*/__pycache__/
+*/__pycache__/
