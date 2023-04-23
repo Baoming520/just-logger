@@ -1,6 +1,6 @@
 build/
 dist/
-*/__pycache__/
 just_logger.egg-info/
 logs/
 venv/
+*/*/__pycache__/
